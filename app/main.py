@@ -3,6 +3,8 @@ from .routers import users, projects, lists, tasks, tags
 from .database import engine
 from .models import Base
 
+import os
+
 app = FastAPI(title="TODOLIST")
 
 app.include_router(users.router, prefix="/users", tags=["users"])

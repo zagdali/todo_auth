@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+    networks:
+      - app-network
+
+  api:
+    build: .
+    container_name: todolist_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # Код в ./backend синхронизируется с контейнером в реальном времени
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      SQLALCHEMY_DATABASE_URI: "postgresql://myuser:mypassword@db:5432/mydatabase"
+
+
+    depends_on:
+      - postgres
+
+    networks:
+      - app-network
+
+#
+#  redis:
+#    image: redis:7
+#    container_name: todolist_redis
+#    ports:
+#      - "6379:6379"
+#
+#  minio:
+#    image: minio/minio
+#    container_name: todolist_minio
+#    command: server /data --console-address ":9001"
+#    environment:
+#      MINIO_ROOT_USER: minio
+#      MINIO_ROOT_PASSWORD: minio123
+#    volumes:
+#      - minio_data:/data
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#
+#  celery_worker:
+#    build: .
+#    container_name: todolist_celery_worker
+#    command: celery -A app.core.celery worker -l info
+#    env_file:
+#      - .env
+#    depends_on:
+#      - redis
+#      - postgres
+#
+#  celery_beat:
+#    build: .
+#    container_name: todolist_celery_beat
+#    command: celery -A app.core.celery beat -l info
+#    env_file:
+#      - .env
+#    depends_on:
+#      - redis
+#      - postgres
+
+
+volumes:
+  pg_data: # Папка для хранения данных базы данных
+  minio_data: # Папка для хранения данных минио
+
+networks:
+  app-network:
+    driver: bridge
