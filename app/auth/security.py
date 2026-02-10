@@ -3,16 +3,33 @@ import hashlib
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta
 
-from jose import jwt
 from passlib.context import CryptContext
 from secrets import token_urlsafe
 from app.config.settings import settings
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+
 
 
 
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+def get_current_user_id(
+    token: str = Depends(oauth2_scheme),
+) -> UUID:
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        return UUID(payload["sub"])
+    except (JWTError, KeyError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Недействительный токен",
+        )
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)

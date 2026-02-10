@@ -18,7 +18,7 @@ from .exceptions import AuthError, ValidationError
 from app.config.database import get_session
 
 from uuid import UUID
-from .dependencies import get_current_user_id
+from .security import get_current_user_id
 
 
 
@@ -52,7 +52,7 @@ def register(
         )
 
 @router.post("/login", response_model=TokenPairResponse) # Вход через форму с помощью OAuth2PasswordRequestForm
-def login(
+def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
     service: AuthService = Depends(get_service),
@@ -67,7 +67,7 @@ def login(
         raise HTTPException(status_code=400, detail=e.message)
 
 @router.post("/login/json", response_model=TokenPairResponse) # Вход через json для апи
-def login(
+def login_json(
     data: LoginRequest,
     session: Session = Depends(get_session),
     service: AuthService = Depends(get_service),

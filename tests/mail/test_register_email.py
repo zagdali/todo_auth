@@ -7,7 +7,8 @@ def test_register_sends_confirmation_email(
 ):
     payload = {
         "email": "newuser@test.com",
-        "password": "StrongPassword123!"
+        "password": "StrongPassword123!",
+        "password_confirm": "StrongPassword123!",
     }
 
     with patch(

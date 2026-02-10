@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.tasks.email_tasks import send_email_confirmation
+from app.tasks.email_tasks import send_password_reset, send_email_confirmation
 
 
 @patch("app.tasks.email_tasks._email")
@@ -8,7 +8,7 @@ def test_send_email_confirmation_calls_email(mock_email):
     to_email = "user@test.com"
     url = "http://test.local/confirm?token=123"
 
-    send_email_confirmation(to_email, url)
+    send_email_confirmation.__wrapped__(None, to_email, token)
 
     mock_email.assert_called_once()
 
@@ -21,12 +21,12 @@ def test_send_email_confirmation_calls_email(mock_email):
 
 @patch("app.tasks.email_tasks._email")
 def test_send_password_reset_email(mock_email):
-    from app.tasks.email_tasks import send_password_reset_email
+
 
     to_email = "user@test.com"
     url = "http://test.local/reset?token=456"
 
-    send_password_reset_email(to_email, url)
+    send_password_reset(to_email, url)
 
     mock_email.assert_called_once()
 

@@ -273,7 +273,7 @@ class AuthService:
 
         refresh_db = Tokens(
             user_id=user.id,
-            token=refresh,
+            token=hash_refresh_token(refresh),
             token_type=settings.REFRESH_TOKEN_TYPE,
             token_hash=hash_refresh_token(refresh),
             expires_at=datetime.utcnow() + settings.REFRESH_TOKEN_TTL,

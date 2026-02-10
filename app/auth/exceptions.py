@@ -8,7 +8,7 @@ class InvalidCredentials(AuthError):
 
 
 class EmailAlreadyExists(AuthError):
-    message = "Проверьте корректность введенных данных"
+    message = "Пользователь с таким email уже существует"
 
 
 class EmailNotVerified(AuthError):

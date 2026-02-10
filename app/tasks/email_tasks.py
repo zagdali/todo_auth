@@ -14,6 +14,7 @@ def send_email_confirmation(self, to_email: str, token: str):
     Отправка письма для подтверждения регистрации
     """
     try:
+        confirm_url = f"http://localhost:8000/auth/confirm?token={token}"
         template = email_confirmation(confirm_url)
 
         _email(
@@ -36,6 +37,7 @@ def send_password_reset(self, to_email: str, token: str):
     Отправка письма для сброса пароля
     """
     try:
+        reset_url = f"http://localhost:8000/auth/password-reset/confirm?token={token}"
         template = password_reset(reset_url)
 
         _email(

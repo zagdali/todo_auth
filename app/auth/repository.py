@@ -80,7 +80,7 @@ class AuthRepository:
     def get_valid_token(
                         self,
                         session: Session,
-                        token: str,
+                        token: str | None,
                         token_type: str
                         ) -> Tokens | None:
         stmt = select(Tokens).where(
