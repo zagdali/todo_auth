@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: postgres_db
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -14,31 +14,53 @@ services:
 
     networks:
       - app-network
-
   api:
     build: .
     container_name: todolist_api
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app # Код в ./backend синхронизируется с контейнером в реальном времени
-      - pg_data:/var/lib/postgresql/data
-    environment:
-      SQLALCHEMY_DATABASE_URI: "postgresql://myuser:mypassword@db:5432/mydatabase"
-
+      - .:/app # Код в ./backend синхронизируется с контейнером в реальном времени
+    env_file:
+      - .env
 
     depends_on:
       - postgres
+      - redis
 
     networks:
       - app-network
 
-#
-#  redis:
-#    image: redis:7
-#    container_name: todolist_redis
-#    ports:
-#      - "6379:6379"
+  redis:
+    image: redis:7
+    container_name: todolist_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  celery_worker:
+    build: .
+    container_name: todolist_celery_worker
+    command: celery -A app.tasks.celery_app worker -l info --pool=solo
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - app-network
+
+  celery_beat:
+    build: .
+    container_name: todolist_celery_beat
+    command: celery -A app.tasks.celery_app beat -l info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    networks:
+      - app-network
 #
 #  minio:
 #    image: minio/minio
@@ -53,26 +75,6 @@ services:
 #      - "9000:9000"
 #      - "9001:9001"
 #
-#  celery_worker:
-#    build: .
-#    container_name: todolist_celery_worker
-#    command: celery -A app.core.celery worker -l info
-#    env_file:
-#      - .env
-#    depends_on:
-#      - redis
-#      - postgres
-#
-#  celery_beat:
-#    build: .
-#    container_name: todolist_celery_beat
-#    command: celery -A app.core.celery beat -l info
-#    env_file:
-#      - .env
-#    depends_on:
-#      - redis
-#      - postgres
-
 
 volumes:
   pg_data: # Папка для хранения данных базы данных
