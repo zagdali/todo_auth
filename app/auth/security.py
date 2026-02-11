@@ -1,7 +1,7 @@
 # app/auth/security.py
 import hashlib
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from passlib.context import CryptContext
 from secrets import token_urlsafe
@@ -42,7 +42,7 @@ def verify_password(password: str, hash_: str) -> bool:
 def create_access_token(user_id: UUID) -> str:
     payload = {
         "sub": str(user_id),
-        "exp": datetime.utcnow() + settings.ACCESS_TOKEN_TTL,
+        "exp": datetime.now(timezone.utc) + settings.ACCESS_TOKEN_TTL,
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
@@ -59,4 +59,4 @@ def generate_token() -> str: # для емаил токенов
 
 
 def token_expiration(hours: int) -> datetime: # для емаил токенов
-    return datetime.utcnow() + timedelta(hours=hours)
+    return datetime.now(timezone.utc) + timedelta(hours=hours)

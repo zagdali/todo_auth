@@ -1,5 +1,5 @@
 # app/auth/service.py
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import Session
 from uuid import UUID
 from .repository import AuthRepository
@@ -18,7 +18,7 @@ from app.config.settings import settings
 
 from .validators import validate_password
 from .exceptions import InvalidCredentials, EmailAlreadyExists, EmailNotVerified, ValidationError
-
+from .templates import email_confirmation, password_reset
 
 # Импорт задач Celery с обработкой ошибок
 try:
@@ -110,75 +110,26 @@ class AuthService:
         try:
             from app.tasks.email_tasks import _email
 
+            # Генерируем ссылки
             if email_type == "confirmation":
-                subject = "Подтверждение регистрации в TODOLIST"
                 confirm_url = f"http://localhost:8000/auth/confirm-email?token={token}"
-                html_body = f"""
-                <html>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-                        <h2 style="color: #333;">Добро пожаловать в TODOLIST!</h2>
-                        <p>Спасибо за регистрацию. Пожалуйста, подтвердите вашу почту, перейдя по ссылке ниже:</p>
-                        <div style="margin: 20px 0;">
-                            <a href="{confirm_url}" 
-                               style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
-                                Подтвердить почту
-                            </a>
-                        </div>
-                        <p>Или скопируйте и вставьте эту ссылку в браузер:</p>
-                        <p style="word-break: break-all; color: #555;">{confirm_url}</p>
-                        <p style="color: #888; font-size: 12px;">Ссылка действительна в течение 24 часов.</p>
-                    </body>
-                </html>
-                """
-                text_body = f"""
-                Добро пожаловать в TODOLIST!
-
-                Спасибо за регистрацию. Пожалуйста, подтвердите вашу почту, перейдя по ссылке:
-
-                {confirm_url}
-
-                Ссылка действительна в течение 24 часов.
-                """
+                template = email_confirmation(confirm_url)
             else:
-                subject = "Сброс пароля в TODOLIST"
                 reset_url = f"http://localhost:8000/auth/password-reset/confirm?token={token}"
-                html_body = f"""
-                <html>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-                        <h2 style="color: #333;">Запрос на сброс пароля</h2>
-                        <p>Вы запросили сброс пароля для вашей учётной записи.</p>
-                        <p>Если это были не вы, просто проигнорируйте это письмо.</p>
-                        <div style="margin: 20px 0;">
-                            <a href="{reset_url}" 
-                               style="display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px;">
-                                Сбросить пароль
-                            </a>
-                        </div>
-                        <p>Или скопируйте и вставьте эту ссылку в браузер:</p>
-                        <p style="word-break: break-all; color: #555;">{reset_url}</p>
-                        <p style="color: #888; font-size: 12px;">Ссылка действительна в течение 1 часа.</p>
-                    </body>
-                </html>
-                """
-                text_body = f"""
-                Запрос на сброс пароля
+                template = password_reset(reset_url)
 
-                Вы запросили сброс пароля для вашей учётной записи.
-                Если это были не вы, просто проигнорируйте это письмо.
-
-                Сбросить пароль:
-                {reset_url}
-
-                Ссылка действительна в течение 1 часа.
-                """
-
-            _email(email, subject, html_body, text_body)
+            # Отправляем письмо
+            _email(
+                email,
+                template.subject,
+                template.html,
+                template.text
+            )
             print(f"[SYNC EMAIL SENT] To: {email}")
 
         except Exception as e:
             print(f"[SYNC EMAIL ERROR] Failed to send email to {email}: {e}")
             # Не выбрасываем исключение, чтобы не сломать регистрацию
-
 
 
 
@@ -218,20 +169,19 @@ class AuthService:
 
 # установка нового пароля
     def reset_password(self, session, token_str: str, new_password: str, confirm_password: str, email: str):
+
         token = self.repo.get_valid_token(session, token_str, settings.PASSWORD_RESET_TOKEN_TYPE)
-
-        if new_password != confirm_password:
-            raise ValidationError(
-                code="PASSWORD_MISMATCH",
-                message="Пароли не совпадают",
-                field="confirm_password",
-            )
-
         if not token:
             raise ValidationError(
                 "INVALID_TOKEN",
                 "Ссылка недействительна или устарела",
                 "token",
+            )
+        if new_password != confirm_password:
+            raise ValidationError(
+                code="PASSWORD_MISMATCH",
+                message="Пароли не совпадают",
+                field="confirm_password",
             )
 
         validate_password(new_password, email)
@@ -273,10 +223,10 @@ class AuthService:
 
         refresh_db = Tokens(
             user_id=user.id,
-            token=hash_refresh_token(refresh),
+            token=None,
             token_type=settings.REFRESH_TOKEN_TYPE,
             token_hash=hash_refresh_token(refresh),
-            expires_at=datetime.utcnow() + settings.REFRESH_TOKEN_TTL,
+            expires_at=datetime.now(timezone.utc) + settings.REFRESH_TOKEN_TTL,
         )
 
         self.repo.save_refresh_token(session, refresh_db)

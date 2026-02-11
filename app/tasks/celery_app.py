@@ -32,10 +32,10 @@ celery_app.conf.update(
 )
 
 # Периодические задачи (если понадобятся)
-celery_app.conf.beat_schedule = {
-    # Пример: очистка старых токенов каждый день в 2:00
-    # 'cleanup-expired-tokens': {
-    #     'task': 'app.tasks.email_tasks.cleanup_expired_tokens',
-    #     'schedule': crontab(hour=2, minute=0),
-    # },
-}
+# celery_app.conf.beat_schedule = {
+#     Пример: очистка старых токенов каждый день в 2:00
+#     'cleanup-expired-tokens': {
+#     'task': 'app.tasks.email_tasks.cleanup_expired_tokens',
+#     'schedule': crontab(hour=2, minute=0),
+#     },
+# }

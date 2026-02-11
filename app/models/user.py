@@ -2,7 +2,7 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
 from datetime import datetime
-
+from typing import Optional
 
 class User(SQLModel, table=True):
     __tablename__ = "user"
@@ -21,8 +21,8 @@ class Tokens(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id")
 
-    token: str = Field(unique=True)
-    token_hash: str | None = None  # Для refresh токенов
+    token: Optional[str] = Field(default=None, index=True)
+    token_hash: Optional[str] = Field(default=None, index=True)  # Для refresh токенов
     token_type: str  # "email_confirm", "password_reset", "refresh_token"
 
     expires_at: datetime

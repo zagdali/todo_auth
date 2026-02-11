@@ -1,5 +1,5 @@
 # app/auth/router.py
-from fastapi import APIRouter, Depends, HTTPException, Query, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
@@ -19,8 +19,7 @@ from app.config.database import get_session
 
 from uuid import UUID
 from .security import get_current_user_id
-
-
+from app.config.settings import settings
 
 
 router = APIRouter()
@@ -147,3 +146,28 @@ def password_reset_confirm(
         data.email,
     )
     return MessageResponse(message="Пароль успешно изменён")
+
+@router.get("/password-reset/confirm") # только для фронтенда
+def password_reset_confirm_get(
+    token: str,
+    session: Session = Depends(get_session),
+    service: AuthService = Depends(get_service),
+):
+    """
+    GET для фронтенда при клике по ссылке сброса пароля.
+    Проверяет валидность токена и редиректит на фронтенд с query-параметром token.
+    """
+
+    db_token = service.repo.get_valid_token(session, token, settings.PASSWORD_RESET_TOKEN_TYPE)
+
+    if not db_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Ссылка недействительна или устарела"
+        )
+
+    # Формируем URL фронтенда (например, React SPA)
+    frontend_url = f"http://localhost:3000/reset-password?token={token}"
+
+    return RedirectResponse(frontend_url,
+        status_code=status.HTTP_303_SEE_OTHER)

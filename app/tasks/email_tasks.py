@@ -14,7 +14,7 @@ def send_email_confirmation(self, to_email: str, token: str):
     Отправка письма для подтверждения регистрации
     """
     try:
-        confirm_url = f"http://localhost:8000/auth/confirm?token={token}"
+        confirm_url = f"http://localhost:8000/auth/confirm-email?token={token}"
         template = email_confirmation(confirm_url)
 
         _email(

@@ -1,5 +1,5 @@
 # app/auth/repository.py
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import Session, select, update
 from uuid import UUID, uuid4
 
@@ -28,12 +28,12 @@ class AuthRepository:
         stmt = select(Tokens).where(
             Tokens.token_hash == token_hash,
             Tokens.revoked_at.is_(None),
-            Tokens.expires_at > datetime.utcnow(),
+            Tokens.expires_at > datetime.now(timezone.utc),
         )
         return session.exec(stmt).first()
 
     def revoke_refresh_token(self, session: Session, token: Tokens): # отзыв токена
-        token.revoked_at = datetime.utcnow()
+        token.revoked_at = datetime.now(timezone.utc)
         session.add(token)
         session.commit()
 
@@ -50,7 +50,7 @@ class AuthRepository:
                 Tokens.user_id == user_id,
                 Tokens.revoked_at.is_(None),
             )
-            .values(revoked_at=datetime.utcnow())
+            .values(revoked_at=datetime.now(timezone.utc))
         )
 
         session.exec(stmt)
@@ -87,7 +87,7 @@ class AuthRepository:
             Tokens.token == token,
             Tokens.token_type == token_type,
             Tokens.is_used == False,
-            Tokens.expires_at > datetime.utcnow()
+            Tokens.expires_at > datetime.now(timezone.utc)
         )
         return session.exec(stmt).first()
 
@@ -95,3 +95,4 @@ class AuthRepository:
         session.add(token)
         session.commit()
         session.refresh(token)
+

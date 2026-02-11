@@ -5,14 +5,17 @@ from app.config.database import engine
 
 from .auth import router as auth
 from .routers import users, projects, lists, tasks, tags
-
+from contextlib import asynccontextmanager
 import os
 
-app = FastAPI(title="TODOLIST")
-
-@app.on_event("startup") # Создаём таблицы после создания приложения
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     SQLModel.metadata.create_all(engine)
+    yield
+
+app = FastAPI(title="TODOLIST", lifespan=lifespan)
+
+
 
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
