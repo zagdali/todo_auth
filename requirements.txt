@@ -1,3 +1,4 @@
+
 amqp==5.3.1
 annotated-doc==0.0.4
 annotated-types==0.7.0
@@ -75,7 +76,15 @@ typing_extensions==4.15.0
 tzdata==2025.3
 tzlocal==5.3.1
 urllib3==2.6.3
+uvicorn==0.24.0
 vine==5.1.0
 virtualenv==20.36.1
 wcwidth==0.5.0
 zstandard==0.25.0
+psycopg2-binary>=2.9.0
+email-validator>=2.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+celery[redis]>=5.3.0
+redis>=5.0.0
+python-multipart>=0.0.9
